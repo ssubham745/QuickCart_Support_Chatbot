@@ -15,13 +15,12 @@ def get_data():
 orders, tickets = get_data()
 
 
-# ------------------------------------------------ optional LLM (wording only)
 def get_key():
     if os.environ.get("ANTHROPIC_API_KEY"):
         return os.environ["ANTHROPIC_API_KEY"]
     try:
         return st.secrets["ANTHROPIC_API_KEY"]
-    except Exception:   # no secrets.toml / key missing -> run without the AI layer
+    except Exception:                                                              
         return None
 
 
@@ -51,12 +50,11 @@ def polish(question, decision):
         return decision["reply"]
 
 
-# ------------------------------------------------ session state
 ss = st.session_state
 ss.setdefault("messages", [])
 ss.setdefault("order", None)
 ss.setdefault("ticket", None)
-ss.setdefault("pending", None)   # decision waiting for customer to pick an action
+ss.setdefault("pending", None)                                                    
 ss.setdefault("trace_msgs", [])
 
 
@@ -64,7 +62,6 @@ def reset_chat():
     ss.messages, ss.pending, ss.trace_msgs = [], None, []
 
 
-# ------------------------------------------------ sidebar: demo IDs
 with st.sidebar:
     st.header("Demo IDs")
     st.caption("Click one to load it, then ask a question.")
@@ -89,10 +86,8 @@ with st.sidebar:
             os.remove(e.LOG_PATH)
         reset_chat()
         st.rerun()
-    st.caption("✨ Claude wording: " + ("ON" if llm_available() else "OFF (rule-based replies)"))
-    st.caption("Refund decisions always come from the 4 SOP rules in code, never from the AI.")
 
-# ------------------------------------------------ main
+                                                       
 st.title("🛒 QuickCart Order Help")
 st.write("Enter your order ID or ticket ID, then ask your question.")
 
@@ -123,7 +118,7 @@ if order is not None:
             + (f" · Ticket {ticket.ticket_id}: {ticket.resolution_status}" if ticket is not None else " · No support ticket yet")
         )
 
-    # chat history
+                  
     for i, msg in enumerate(ss.messages):
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
@@ -132,7 +127,7 @@ if order is not None:
                     for rule, res in ss.trace_msgs[i]:
                         st.markdown(f"- **{rule}**: {res}")
 
-    # instant-action buttons for the latest reply
+                                                 
     if ss.pending and ss.pending["options"]:
         opts = ss.pending["options"]
         st.write("**Choose an action:**" if len(opts) > 1 else "**Instant action:**")
@@ -152,8 +147,8 @@ if order is not None:
                 ss.pending = None
                 st.rerun()
 
-    # chat input
-    if q := st.chat_input("Ask something, e.g. “Where is my order?” or “My item came broken, I want a refund”"):
+                
+    if q := st.chat_input("Ask something about this order"):
         ss.messages.append({"role": "user", "content": q})
         ss.trace_msgs.append([])
         out = e.respond(q, order, ticket, orders, tickets)
@@ -164,4 +159,3 @@ if order is not None:
         st.rerun()
 else:
     st.info("Pick a demo ID from the sidebar or type your own to get started.")
-    
